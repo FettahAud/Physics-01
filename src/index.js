@@ -24,7 +24,28 @@ const cannonDebugger = new CannonDebugger(scene, world)
 
 // gui
 const gui = new dat.GUI()
-const debugObject = {}
+const debugObject = {
+   reset: () => {
+      objectsToUpdate.forEach(object => {
+         scene.remove(object.obj)
+         world.removeBody(object.objBody)
+      })
+      objectsToUpdate.splice(0, objectsToUpdate.length)
+      // console.log(objectsToUpdate);
+      createBoxes()
+   },
+   applyForce: () => {
+      const topPoint = new CANNON.Vec3(0, 0, 0)
+      objectsToUpdate.forEach((object) => {
+         const force = new CANNON.Vec3((Math.random() - .5) * 1000, (Math.random() - .5) * 1000, 0)
+         console.log()
+         object.objBody.applyForce(force, topPoint) 
+      })
+   }
+}
+
+gui.add(debugObject, 'reset')
+gui.add(debugObject, 'applyForce')
 
 /**
  *  global variable
@@ -37,13 +58,6 @@ const material = new THREE.MeshStandardMaterial({color: '#777777',})
 const strength = 500
 const dt = 1 / 2
 const raycaster = new THREE.Raycaster()
-
-// force
-const applyForce = (pBody) => {
-   const topPoint = new CANNON.Vec3(0, 1, 0)
-   const force = new CANNON.Vec3(-strength * dt, 10, 0)
-   pBody.applyForce(force, topPoint) 
-}
 
 // mouse
 const mouse = new THREE.Vector2()
@@ -132,7 +146,7 @@ const floor = () => {
          color: "#e0e0e0"
       })
    )
-   floor.position.set(0, 0, 0)
+   floor.position.copy(pFloorBody.position)
    floor.rotation.x = - Math.PI * 0.5 
    floor.receiveShadow = true
    
@@ -195,11 +209,6 @@ const createSphere = () => {
    pSphereBody.position.set(2, 0, 0)
    pSphereBody.position.copy(sphere.position)
 
-   Object.assign(debugObject, {
-      applyForce: applyForce.bind(this, pSphereBody)
-   })
-   gui.add(debugObject, 'applyForce')
-
    objectsToUpdate.push({
       obj: sphere,
       objBody: pSphereBody
@@ -208,18 +217,21 @@ const createSphere = () => {
    scene.add(sphere)
 }
 
+const createBoxes = () => {
+   for(let i = 0; i <= 5; i++) {
+      for(let j = 0; j <= 3; j++) {
+         for(let k = -3; k <= 3; k++) {
+            createBox({x: i * -1, y: (j * 1 ) + 0.5, z: k})
+         }
+      }
+   }
+}
+
 window.addEventListener('load', () => {
    lights()
    floor()
    createSphere()
-   for(let i = 0; i <= 3; i++) {
-      for(let j = 0; j <= 3; j++) {
-         createBox({x: i * -1, y: j * 1, z: 1})
-         createBox({x: i * -1, y: j * 1, z: 2})
-         createBox({x: i * -1, y: 0, z: 0})
-      }
-   }
-   
+   createBoxes()
 })
 
 /**
